@@ -1,0 +1,13 @@
+# Cloud Run env for the PUBLIC service `neophi` (site, /api, webhook). Copy to public-env.yaml and fill in.
+# Names only here. Secrets (META_APP_SECRET, META_VERIFY_TOKEN) are bound from Secret Manager with --set-secrets.
+GOOGLE_CLOUD_PROJECT: "YOUR_PROJECT_ID"
+GOOGLE_CLOUD_LOCATION: "global"
+MEDIA_BUCKET: "YOUR_PRIVATE_MEDIA_BUCKET"
+ANALYSIS_MODEL: "CHOOSE_A_VIDEO_CAPABLE_MODEL_AVAILABLE_IN_YOUR_PROJECT"
+EMBEDDING_MODEL: "CHOOSE_A_COMPATIBLE_EMBEDDING_MODEL"
+# Numeric ID of the connected Instagram professional account (@yuck.pov). Not a secret.
+META_IG_RECIPIENT_ID: "17841449458840084"
+# Approved testers only: INSTAGRAM_SCOPED_SENDER_ID=FIREBASE_UID (comma separated for more). Anyone else is dropped.
+INSTAGRAM_SENDER_UID_MAP: ""
+# Set to "1" for ONE test DM to read a denied sender's scoped ID from the logs, then back to "0".
+INSTAGRAM_LOG_DENIED_SENDERS: "0"
