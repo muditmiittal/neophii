@@ -1,0 +1,14 @@
+# Cloud Run env for the PRIVATE service `neophi-worker`. Copy to worker-env.yaml and fill in.
+GOOGLE_CLOUD_PROJECT: "YOUR_PROJECT_ID"
+GOOGLE_CLOUD_LOCATION: "global"
+MEDIA_BUCKET: "YOUR_PRIVATE_MEDIA_BUCKET"
+ANALYSIS_MODEL: "SAME_AS_PUBLIC"
+EMBEDDING_MODEL: "SAME_AS_PUBLIC"
+# The Scheduler token audience. Use the worker's Cloud Run service URL with NO path, and the very same string in the
+# Scheduler job's --oidc-token-audience. (Cloud Run's own invoker check accepts the service URL by default.)
+INSTAGRAM_WORKER_OIDC_AUDIENCE: "https://YOUR_WORKER_SERVICE_URL"
+INSTAGRAM_WORKER_SERVICE_ACCOUNT: "neophi-scheduler@YOUR_PROJECT_ID.iam.gserviceaccount.com"
+# Only if the Graph attachment read is approved (bind INSTAGRAM_ACCESS_TOKEN with --set-secrets). Unified Login
+# apps probably need graph.facebook.com here; confirm in staging before enabling.
+META_GRAPH_HOST: "graph.instagram.com"
+META_GRAPH_VERSION: "v27.0"

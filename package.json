@@ -12,7 +12,8 @@
     "start": "node dist/server/index.js",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
     "lint": "eslint src server tests",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e:local": "tsx tools/local-e2e.ts"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

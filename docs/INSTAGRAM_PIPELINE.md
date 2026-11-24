@@ -44,7 +44,7 @@ Secrets come from Secret Manager. Never put a value in this repo, an image, a bu
 | `INSTAGRAM_MAX_MEDIA_BYTES`, `INSTAGRAM_MEDIA_TIMEOUT_MS` | no | worker | Download caps (defaults 15 MB, 25 s). |
 | `INSTAGRAM_JOB_MAX_ATTEMPTS` | no | worker | Retry bound for share/note jobs (default 5; analysis jobs use 4). |
 | `INSTAGRAM_MAX_EVENT_AGE_HOURS` | no | public | Older deliveries are ignored as stale (default 48). |
-| `INSTAGRAM_WORKER_OIDC_AUDIENCE` | no | worker | Exact URL Cloud Scheduler/Tasks puts in the OIDC token, e.g. `https://WORKER_URL/internal/instagram/worker/run`. |
+| `INSTAGRAM_WORKER_OIDC_AUDIENCE` | no | worker | Exact `aud` of the OIDC token Cloud Scheduler/Tasks sends. Use the worker's Cloud Run service URL (no path), e.g. `https://WORKER_URL`: that is the audience Cloud Run's own invoker check accepts by default. If you want a different value, add it as a Cloud Run custom audience on the worker and use the same string here and in the Scheduler job. |
 | `INSTAGRAM_WORKER_SERVICE_ACCOUNT` | no | worker | Email of the scheduler/tasks identity allowed to call the worker. |
 | `INSTAGRAM_WORKER_SECRET` | yes | VM only | Alternative bearer secret for a VM cron. Not needed with OIDC. |
 | `INSTAGRAM_WORKER_POLL_MS` | no | VM / always-on | In-process poller interval (e.g. `5000`). `0` (default) disables it. |
@@ -115,11 +115,11 @@ WORKER_URL=$(gcloud run services describe neophi-worker --project "$PROJECT" --r
 gcloud scheduler jobs create http neophi-instagram-worker --project "$PROJECT" --location "$REGION" \
   --schedule='* * * * *' --http-method=POST --uri="$WORKER_URL/internal/instagram/worker/run" \
   --oidc-service-account-email=neophi-scheduler@$PROJECT.iam.gserviceaccount.com \
-  --oidc-token-audience="$WORKER_URL/internal/instagram/worker/run"
+  --oidc-token-audience="$WORKER_URL" --attempt-deadline=300s
 ```
 
 `public-env.yaml`: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `MEDIA_BUCKET`, `ANALYSIS_MODEL`, `EMBEDDING_MODEL`, `META_IG_RECIPIENT_ID`, `INSTAGRAM_SENDER_UID_MAP`.
-`worker-env.yaml`: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `MEDIA_BUCKET`, `ANALYSIS_MODEL`, `EMBEDDING_MODEL`, `INSTAGRAM_WORKER_OIDC_AUDIENCE=$WORKER_URL/internal/instagram/worker/run`, `INSTAGRAM_WORKER_SERVICE_ACCOUNT=neophi-scheduler@$PROJECT.iam.gserviceaccount.com`.
+`worker-env.yaml`: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `MEDIA_BUCKET`, `ANALYSIS_MODEL`, `EMBEDDING_MODEL`, `INSTAGRAM_WORKER_OIDC_AUDIENCE=$WORKER_URL`, `INSTAGRAM_WORKER_SERVICE_ACCOUNT=neophi-scheduler@$PROJECT.iam.gserviceaccount.com`.
 
 Check: `curl -X POST $WORKER_URL/internal/instagram/worker/run` without a token returns 403 from Cloud Run, and the public service returns 404 for `/internal/...`.
 
@@ -152,6 +152,8 @@ Check: `curl -X POST $WORKER_URL/internal/instagram/worker/run` without a token 
    If the attachment is HTML (`media: html`), the expected result is the caption plus exact note, which is still a valid outcome. A successful synthetic test and a real caption-only fallback are recorded separately.
 
 ## Tests
+
+`npm run e2e:local` runs the whole tester journey over real HTTP with no credentials: signed share + exact note, durable intake, worker, stored video, fake model, memory in the tester's own library (and a second run where Meta returns only an HTML page, which must fall back to caption plus exact note). It prints redacted results only.
 
 `npm test` runs the pipeline on fixtures and mocks only (no network to Meta or Google). `tests/firestore-store.emulator.test.ts` runs the same flow against the real `FirestoreStore` on a local emulator and is skipped unless `FIRESTORE_EMULATOR_HOST` is set:
 
